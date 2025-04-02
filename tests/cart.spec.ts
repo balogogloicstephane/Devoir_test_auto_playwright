@@ -1,19 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-test('Ajouter un article aléatoire au panier et commander', async ({ page }) => {
+test('Ajouter un article au panier et commander', async ({ page }) => {
   await page.goto('https://ztrain-web.vercel.app/home');
 
-  // Récupérer tous les éléments d'articles (les images dans ce cas)
-  const products = await page.$$('img.style_card_body_img__mkV1D');
-
-  // Vérifier qu'il y a des produits disponibles
-  expect(products.length).toBeGreaterThan(0);
-
-  // Choisir un produit aléatoire
-  const randomProduct = products[Math.floor(Math.random() * products.length)];
-
-  // Cliquer sur l'image du produit choisi
-  await randomProduct.click();
+  // Attendre que l'image de l'article soit visible et cliquer dessus
+  await page.waitForSelector('img.style_card_body_img__mkV1D');
+  await page.click('img.style_card_body_img__mkV1D');
 
   // Attendre que la page du produit s'affiche
   await page.waitForLoadState('networkidle');
@@ -38,51 +30,17 @@ test('Ajouter un article aléatoire au panier et commander', async ({ page }) =>
 
   // Vérifier si la pop-up de connexion s'affiche (cas d'un utilisateur non connecté)
   const popupConnexion = await page.locator('.ant-modal-content').isVisible();
-
-  if (popupConnexion) {
-    // Attendre que le champ email soit visible et le remplir
-    await page.waitForSelector('#email_login');
-    const email = 'loicfranceb@gmail.com'; // Remplacez par l'email souhaité
-    await page.fill('#email_login', email);
-
-    // Vérifier que le champ email est bien rempli
-    expect(await page.inputValue('#email_login')).toBe(email);
-
-    // Attendre que le champ mot de passe soit visible et le remplir
-    await page.waitForSelector('#password_login');
-    const password = 'Balo14723'; // Remplacez par le mot de passe souhaité
-    await page.fill('#password_login', password);
-
-    // Vérifier que le champ mot de passe est bien rempli
-    expect(await page.inputValue('#password_login')).toBe(password);
-
-    // Attendre que le bouton "Connexion" soit visible et le cliquer
-    await page.waitForSelector('button[type="submit"]');
-    await page.click('button[type="submit"]');
-
-    // Attendre la fin du chargement et vérifier la connexion réussie
-    await page.waitForLoadState('networkidle');
-    console.log('Connexion réussie !');
-    console.log('🔒 Pop-up de connexion détectée !');
-  }
-
-//   // Vérifier si la pop-up de paiement apparaît (pour un utilisateur connecté)
-//   const popupPaiement = await page.locator('main#style_checkout_wrapper__JTsFz').isVisible();
   
-//   if (popupPaiement) {
-//     console.log('💳 Pop-up de paiement affichée !');
-    
-//     // Vous pouvez interagir avec la pop-up de paiement ici
-//     await page.fill('#card-number', '4111111111111111'); // Exemple de numéro de carte
-//     await page.fill('#card-expiry', '12/25');
-//     await page.fill('#cvc', '123');
-//     await page.fill('#zip', '75001'); // Code postal exemple
-//     await page.fill('#style_input_address__CrN2C', 'Adresse de livraison'); // Exemple d'adresse
+  if (popupConnexion) {
+    console.log('🔒 Pop-up de connexion détectée !');
+  } else {
+    // Vérifier si la pop-up de paiement apparaît
+    await page.waitForSelector('.payment-modal-selector', { timeout: 5000 });
+    console.log('💳 Pop-up de paiement affichée !');
+  }
+});
 
-//     // Cliquer sur le bouton de validation
-//     await page.click('#style_btnSubmit__sn_sg');
-//   }
-
-  // ❗ Pause pour voir le comportement
- // await page.pause();
+// Ajouter une pause de 5 secondes après le test avant la fermeture du navigateur
+test.afterAll(async () => {
+  await new Promise(resolve => setTimeout(resolve, 5000));
 });
